@@ -33,6 +33,20 @@ type ItemRow = {
   description: string | null;
   price: number | null;
   currency: string | null;
+  attributes: string[] | null;
+  created_at: string;
+};
+
+type ReviewRow = {
+  id: string;
+  upload_id: string;
+  category: string | null;
+  name: string | null;
+  description: string | null;
+  price: number | null;
+  currency: string | null;
+  attributes: string[] | null;
+  reasons: string[];
   created_at: string;
 };
 
@@ -42,6 +56,14 @@ type UploadRow = {
   status: string;
   error: string | null;
   created_at: string;
+};
+
+const REASON_LABEL: Record<string, string> = {
+  name_null: "nome ausente",
+  price_null: "preço ausente",
+  price_not_positive: "preço ≤ 0",
+  price_out_of_range: "preço fora do intervalo",
+  duplicate: "duplicado",
 };
 
 function fileToBase64(file: File): Promise<string> {
