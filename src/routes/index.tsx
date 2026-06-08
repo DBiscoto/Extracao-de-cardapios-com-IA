@@ -227,9 +227,9 @@ function Index() {
         <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="size-5 text-primary" />
-            <span className="text-sm font-medium tracking-wide">Cardápio · Extrator</span>
+            <span className="text-sm font-medium tracking-wide">Extrator de Cardapios</span>
           </div>
-          <span className="text-xs text-muted-foreground">POC · Gemini multimodal</span>
+          <span className="text-xs text-muted-foreground">​Aluno: Diogo Biscoto</span>
         </div>
       </header>
 
