@@ -63,7 +63,7 @@ REGRAS DE FIDELIDADE (CRÍTICO — não viole nunca):
 
 type CleanItem = {
   category: string | null;
-  name: string | null;
+  name: string;
   description: string | null;
   price: number | null;
   currency: string;
@@ -106,7 +106,7 @@ function runGuardrails(items: ExtractedItem[], defaultCurrency: string) {
       typeof raw.category === "string" && raw.category.trim()
         ? raw.category.trim()
         : null,
-    name: typeof raw.name === "string" ? raw.name.trim() : null,
+    name: typeof raw.name === "string" ? raw.name.trim() : "",
     description:
       typeof raw.description === "string" && raw.description.trim()
         ? raw.description.trim()
