@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
 import { extractMenu, deleteUpload, listUploads, listItems, listReview } from "@/lib/menu-extract.functions";
+import { useDeviceId } from "@/hooks/use-device-id";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
