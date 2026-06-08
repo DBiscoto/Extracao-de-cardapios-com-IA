@@ -236,6 +236,13 @@ function Index() {
           <p className="text-muted-foreground whitespace-pre-line">
             Envie uma imagem, PDF ou JSON. A IA identifica categorias, itens, descrições e preços, salva no banco e gera uma planilha Excel pronta para download. {"\n"}
           </p>
+          <img
+            src={heroIllustration}
+            alt="Ilustração de um cardápio físico se transformando em uma planilha digital"
+            className="w-full max-w-2xl rounded-xl border border-border shadow-lg"
+            width={1024}
+            height={512}
+          />
         </section>
 
         <Card className="p-8 bg-card border-border">
