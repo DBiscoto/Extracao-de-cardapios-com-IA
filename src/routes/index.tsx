@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
 import { extractMenu, deleteUpload, listUploads, listItems, listReview } from "@/lib/menu-extract.functions";
+import { useDeviceId } from "@/hooks/use-device-id";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -83,31 +84,33 @@ function Index() {
   const listUploadsFn = useServerFn(listUploads);
   const listItemsFn = useServerFn(listItems);
   const listReviewFn = useServerFn(listReview);
+  const deviceId = useDeviceId();
   const [activeUpload, setActiveUpload] = useState<string | null>(null);
 
   const uploadsQ = useQuery({
-    queryKey: ["uploads"],
+    queryKey: ["uploads", deviceId],
+    enabled: !!deviceId,
     queryFn: async () => {
-      const data = await listUploadsFn();
+      const data = await listUploadsFn({ data: { deviceId: deviceId! } });
       return data as UploadRow[];
     },
     refetchInterval: 4000,
   });
 
   const itemsQ = useQuery({
-    queryKey: ["items", activeUpload],
-    enabled: !!activeUpload,
+    queryKey: ["items", activeUpload, deviceId],
+    enabled: !!activeUpload && !!deviceId,
     queryFn: async () => {
-      const data = await listItemsFn({ data: { uploadId: activeUpload! } });
+      const data = await listItemsFn({ data: { uploadId: activeUpload!, deviceId: deviceId! } });
       return data as ItemRow[];
     },
   });
 
   const reviewQ = useQuery({
-    queryKey: ["review", activeUpload],
-    enabled: !!activeUpload,
+    queryKey: ["review", activeUpload, deviceId],
+    enabled: !!activeUpload && !!deviceId,
     queryFn: async () => {
-      const data = await listReviewFn({ data: { uploadId: activeUpload! } });
+      const data = await listReviewFn({ data: { uploadId: activeUpload!, deviceId: deviceId! } });
       return data as ReviewRow[];
     },
   });
@@ -115,9 +118,10 @@ function Index() {
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
+      if (!deviceId) throw new Error("Inicializando sessão, tente novamente");
       const base64 = await fileToBase64(file);
       return extract({
-        data: { filename: file.name, mimeType: file.type || "application/octet-stream", base64 },
+        data: { filename: file.name, mimeType: file.type || "application/octet-stream", base64, deviceId },
       });
     },
     onSuccess: (res) => {
@@ -135,7 +139,8 @@ function Index() {
   const removeFn = useServerFn(deleteUpload);
   const removeUpload = useMutation({
     mutationFn: async (id: string) => {
-      await removeFn({ data: { id } });
+      if (!deviceId) throw new Error("Inicializando sessão, tente novamente");
+      await removeFn({ data: { id, deviceId } });
     },
     onSuccess: (_d, id) => {
       if (activeUpload === id) setActiveUpload(null);
@@ -143,6 +148,7 @@ function Index() {
       toast.success("Removido");
     },
   });
+
 
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
