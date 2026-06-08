@@ -14,7 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      menu_items: {
+        Row: {
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          name: string
+          price: number | null
+          upload_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          price?: number | null
+          upload_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          price?: number | null
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "menu_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_uploads: {
+        Row: {
+          created_at: string
+          error: string | null
+          filename: string
+          id: string
+          mime_type: string | null
+          raw_response: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          filename: string
+          id?: string
+          mime_type?: string | null
+          raw_response?: Json | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          filename?: string
+          id?: string
+          mime_type?: string | null
+          raw_response?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
