@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cardápio → Planilha | Extração com IA" },
+      { title: "Extração Estruturada de Cardápios com IA" },
       {
         name: "description",
         content:
@@ -236,11 +236,12 @@ function Index() {
       <main className="mx-auto max-w-6xl px-6 py-12 space-y-10">
         <section className="space-y-3 max-w-2xl">
           <h1 className="text-4xl font-semibold tracking-tight">
-            Cardápio em <span className="text-primary">planilha</span>, em segundos.
+            Extração <span className="text-primary">Estruturada</span> de Cardápios com IA
           </h1>
           <p className="text-muted-foreground">
             Envie uma imagem, PDF ou JSON. A IA identifica categorias, itens, descrições e preços, salva
-            no banco e gera uma planilha Excel pronta para download.
+            no banco e gera uma planilha Excel pronta para download. Nada é inventado: trechos ilegíveis
+            ficam em branco ou vão para revisão humana.
           </p>
         </section>
 
