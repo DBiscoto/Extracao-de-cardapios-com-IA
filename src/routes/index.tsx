@@ -6,6 +6,7 @@ import { Upload, FileText, Download, Loader2, Sparkles, Trash2 } from "lucide-re
 import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
+import heroIllustration from "@/assets/hero-illustration.png";
 import { extractMenu, deleteUpload, listUploads, listItems, listReview } from "@/lib/menu-extract.functions";
 import { useDeviceId } from "@/hooks/use-device-id";
 import { Button } from "@/components/ui/button";
