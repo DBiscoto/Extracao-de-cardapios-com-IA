@@ -6,6 +6,7 @@ import { Upload, FileText, Download, Loader2, Sparkles, Trash2 } from "lucide-re
 import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
+import heroIllustration from "@/assets/hero-illustration.png";
 import { extractMenu, deleteUpload, listUploads, listItems, listReview } from "@/lib/menu-extract.functions";
 import { useDeviceId } from "@/hooks/use-device-id";
 import { Button } from "@/components/ui/button";
@@ -235,6 +236,13 @@ function Index() {
           <p className="text-muted-foreground whitespace-pre-line">
             Envie uma imagem, PDF ou JSON. A IA identifica categorias, itens, descrições e preços, salva no banco e gera uma planilha Excel pronta para download. {"\n"}
           </p>
+          <img
+            src={heroIllustration}
+            alt="Ilustração de um cardápio físico se transformando em uma planilha digital"
+            className="w-full max-w-2xl rounded-xl border border-border shadow-lg"
+            width={1024}
+            height={512}
+          />
         </section>
 
         <Card className="p-8 bg-card border-border">
