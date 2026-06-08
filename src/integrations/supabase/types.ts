@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       menu_items: {
         Row: {
+          attributes: Json | null
           category: string | null
           created_at: string
           currency: string | null
@@ -26,6 +27,7 @@ export type Database = {
           upload_id: string
         }
         Insert: {
+          attributes?: Json | null
           category?: string | null
           created_at?: string
           currency?: string | null
@@ -36,6 +38,7 @@ export type Database = {
           upload_id: string
         }
         Update: {
+          attributes?: Json | null
           category?: string | null
           created_at?: string
           currency?: string | null
@@ -54,6 +57,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      menu_items_review: {
+        Row: {
+          attributes: Json | null
+          category: string | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          name: string | null
+          price: number | null
+          raw: Json | null
+          reasons: string[]
+          upload_id: string
+        }
+        Insert: {
+          attributes?: Json | null
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          name?: string | null
+          price?: number | null
+          raw?: Json | null
+          reasons?: string[]
+          upload_id: string
+        }
+        Update: {
+          attributes?: Json | null
+          category?: string | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          name?: string | null
+          price?: number | null
+          raw?: Json | null
+          reasons?: string[]
+          upload_id?: string
+        }
+        Relationships: []
       }
       menu_uploads: {
         Row: {

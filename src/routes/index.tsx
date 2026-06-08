@@ -33,6 +33,20 @@ type ItemRow = {
   description: string | null;
   price: number | null;
   currency: string | null;
+  attributes: string[] | null;
+  created_at: string;
+};
+
+type ReviewRow = {
+  id: string;
+  upload_id: string;
+  category: string | null;
+  name: string | null;
+  description: string | null;
+  price: number | null;
+  currency: string | null;
+  attributes: string[] | null;
+  reasons: string[];
   created_at: string;
 };
 
@@ -42,6 +56,14 @@ type UploadRow = {
   status: string;
   error: string | null;
   created_at: string;
+};
+
+const REASON_LABEL: Record<string, string> = {
+  name_null: "nome ausente",
+  price_null: "preço ausente",
+  price_not_positive: "preço ≤ 0",
+  price_out_of_range: "preço fora do intervalo",
+  duplicate: "duplicado",
 };
 
 function fileToBase64(file: File): Promise<string> {
@@ -89,6 +111,20 @@ function Index() {
     },
   });
 
+  const reviewQ = useQuery({
+    queryKey: ["review", activeUpload],
+    enabled: !!activeUpload,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_items_review")
+        .select("*")
+        .eq("upload_id", activeUpload!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as ReviewRow[];
+    },
+  });
+
   const upload = useMutation({
     mutationFn: async (file: File) => {
       const base64 = await fileToBase64(file);
@@ -97,7 +133,11 @@ function Index() {
       });
     },
     onSuccess: (res) => {
-      toast.success(`Cardápio processado — ${res.count} item(ns) extraídos`);
+      const rej = (res as any).rejected ?? 0;
+      toast.success(
+        `Cardápio processado — ${res.count} aprovado(s)` +
+          (rej ? ` · ${rej} para revisão` : ""),
+      );
       setActiveUpload(res.uploadId);
       qc.invalidateQueries({ queryKey: ["uploads"] });
     },
@@ -106,6 +146,8 @@ function Index() {
 
   const removeUpload = useMutation({
     mutationFn: async (id: string) => {
+      await supabase.from("menu_items").delete().eq("upload_id", id);
+      await supabase.from("menu_items_review").delete().eq("upload_id", id);
       const { error } = await supabase.from("menu_uploads").delete().eq("id", id);
       if (error) throw error;
     },
@@ -129,22 +171,45 @@ function Index() {
 
   function exportExcel() {
     const items = itemsQ.data || [];
-    if (!items.length) return;
+    const reviews = reviewQ.data || [];
+    if (!items.length && !reviews.length) return;
+
     const rows = items.map((i) => ({
       Categoria: i.category || "",
       Item: i.name,
       Descrição: i.description || "",
       Preço: i.price ?? "",
       Moeda: i.currency || "",
+      Atributos: (i.attributes || []).join("; "),
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 22 }, { wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 8 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 8 }, { wch: 30 }];
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Cardápio");
-    const upload = uploadsQ.data?.find((u) => u.id === activeUpload);
-    const name = (upload?.filename || "cardapio").replace(/\.[^.]+$/, "");
+
+    if (reviews.length) {
+      const revRows = reviews.map((r) => ({
+        Categoria: r.category || "",
+        Item: r.name || "",
+        Descrição: r.description || "",
+        Preço: r.price ?? "",
+        Moeda: r.currency || "",
+        Atributos: (r.attributes || []).join("; "),
+        Motivos: r.reasons.map((x) => REASON_LABEL[x] || x).join("; "),
+      }));
+      const wsR = XLSX.utils.json_to_sheet(revRows);
+      wsR["!cols"] = [
+        { wch: 22 }, { wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 8 }, { wch: 30 }, { wch: 30 },
+      ];
+      XLSX.utils.book_append_sheet(wb, wsR, "Revisão");
+    }
+
+    const up = uploadsQ.data?.find((u) => u.id === activeUpload);
+    const name = (up?.filename || "cardapio").replace(/\.[^.]+$/, "");
     XLSX.writeFile(wb, `${name}.xlsx`);
   }
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, ItemRow[]>();
@@ -265,12 +330,13 @@ function Index() {
                   <div>
                     <h2 className="text-lg font-medium">Itens extraídos</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {(itemsQ.data || []).length} itens · salvos no banco
+                      {(itemsQ.data || []).length} aprovados ·{" "}
+                      {(reviewQ.data || []).length} para revisão
                     </p>
                   </div>
                   <Button
                     onClick={exportExcel}
-                    disabled={!itemsQ.data?.length}
+                    disabled={!itemsQ.data?.length && !reviewQ.data?.length}
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <Download className="size-4 mr-2" />
@@ -284,7 +350,7 @@ function Index() {
 
                 {!itemsQ.isLoading && grouped.length === 0 && (
                   <div className="text-sm text-muted-foreground text-center py-10">
-                    Nenhum item encontrado neste cardápio.
+                    Nenhum item aprovado pelos guardrails neste cardápio.
                   </div>
                 )}
 
@@ -307,6 +373,18 @@ function Index() {
                                   {it.description}
                                 </div>
                               )}
+                              {it.attributes && it.attributes.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {it.attributes.map((a, i) => (
+                                    <span
+                                      key={i}
+                                      className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/60 text-muted-foreground"
+                                    >
+                                      {a}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             <div className="text-sm tabular-nums text-primary self-center">
                               {it.price != null
@@ -322,6 +400,45 @@ function Index() {
                     </div>
                   ))}
                 </div>
+
+                {(reviewQ.data || []).length > 0 && (
+                  <div className="mt-8">
+                    <div className="text-xs uppercase tracking-wider text-destructive mb-2">
+                      Revisão humana · {(reviewQ.data || []).length}
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Itens reprovados pelos guardrails (Great Expectations) — desviados para esta
+                      fila em vez de quebrar o pipeline.
+                    </p>
+                    <div className="divide-y divide-border border border-destructive/30 rounded-lg overflow-hidden">
+                      {(reviewQ.data || []).map((r) => (
+                        <div key={r.id} className="px-4 py-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-medium">{r.name || <em className="text-muted-foreground">sem nome</em>}</div>
+                            <div className="text-xs tabular-nums text-muted-foreground">
+                              {r.price != null
+                                ? new Intl.NumberFormat("pt-BR", {
+                                    style: "currency",
+                                    currency: r.currency || "BRL",
+                                  }).format(r.price)
+                                : "preço inválido"}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {r.reasons.map((x, i) => (
+                              <span
+                                key={i}
+                                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive"
+                              >
+                                {REASON_LABEL[x] || x}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </Card>
