@@ -103,6 +103,7 @@ export type Database = {
       menu_uploads: {
         Row: {
           created_at: string
+          device_id: string | null
           error: string | null
           filename: string
           id: string
@@ -112,6 +113,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          device_id?: string | null
           error?: string | null
           filename: string
           id?: string
@@ -121,6 +123,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          device_id?: string | null
           error?: string | null
           filename?: string
           id?: string
