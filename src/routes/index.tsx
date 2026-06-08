@@ -223,7 +223,7 @@ function Index() {
             <Sparkles className="size-5 text-primary" />
             <span className="text-sm font-medium tracking-wide">Extrator de Cardapios</span>
           </div>
-          <span className="text-xs text-muted-foreground">​Aluno: Diogo Biscoto</span>
+          <span className="text-xs text-muted-foreground">​</span>
         </div>
       </header>
 
@@ -438,7 +438,7 @@ function Index() {
 
       <footer className="border-t border-border mt-16">
         <div className="mx-auto max-w-6xl px-6 py-6 text-xs text-muted-foreground flex justify-between">
-          <span>Extração e Preparação de Dados · IBMEC</span>
+          <span>Extração e Preparação de Dados</span>
           <span>Pipeline: Upload → Gemini → Banco → Excel</span>
         </div>
       </footer>
