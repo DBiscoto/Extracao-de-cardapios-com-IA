@@ -155,7 +155,10 @@ function runGuardrails(items: ExtractedItem[], defaultCurrency: string) {
 }
 
 export const extractMenu = createServerFn({ method: "POST" })
-  .inputValidator((d: ExtractInput) => d)
+  .inputValidator((d: ExtractInput) => {
+    validateDeviceId(d?.deviceId);
+    return d;
+  })
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY ausente");
@@ -166,6 +169,7 @@ export const extractMenu = createServerFn({ method: "POST" })
         filename: data.filename,
         mime_type: data.mimeType,
         status: "processing",
+        device_id: data.deviceId,
       })
       .select()
       .single();
