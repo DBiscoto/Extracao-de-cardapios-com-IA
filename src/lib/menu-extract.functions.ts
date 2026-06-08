@@ -6,7 +6,15 @@ type ExtractInput = {
   mimeType: string;
   // base64 data WITHOUT the data: prefix
   base64: string;
+  deviceId: string;
 };
+
+function validateDeviceId(id: unknown): string {
+  if (typeof id !== "string" || !/^[a-zA-Z0-9_-]{8,64}$/.test(id)) {
+    throw new Error("deviceId inválido");
+  }
+  return id;
+}
 
 type ExtractedItem = {
   category?: string | null;
