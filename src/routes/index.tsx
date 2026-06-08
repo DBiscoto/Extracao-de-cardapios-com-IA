@@ -6,8 +6,7 @@ import { Upload, FileText, Download, Loader2, Sparkles, Trash2 } from "lucide-re
 import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
-import { supabase } from "@/integrations/supabase/client";
-import { extractMenu, deleteUpload } from "@/lib/menu-extract.functions";
+import { extractMenu, deleteUpload, listUploads, listItems, listReview } from "@/lib/menu-extract.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
