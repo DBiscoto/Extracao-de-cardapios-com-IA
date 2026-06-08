@@ -330,12 +330,13 @@ function Index() {
                   <div>
                     <h2 className="text-lg font-medium">Itens extraídos</h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {(itemsQ.data || []).length} itens · salvos no banco
+                      {(itemsQ.data || []).length} aprovados ·{" "}
+                      {(reviewQ.data || []).length} para revisão
                     </p>
                   </div>
                   <Button
                     onClick={exportExcel}
-                    disabled={!itemsQ.data?.length}
+                    disabled={!itemsQ.data?.length && !reviewQ.data?.length}
                     className="bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <Download className="size-4 mr-2" />
@@ -349,7 +350,7 @@ function Index() {
 
                 {!itemsQ.isLoading && grouped.length === 0 && (
                   <div className="text-sm text-muted-foreground text-center py-10">
-                    Nenhum item encontrado neste cardápio.
+                    Nenhum item aprovado pelos guardrails neste cardápio.
                   </div>
                 )}
 
@@ -372,6 +373,18 @@ function Index() {
                                   {it.description}
                                 </div>
                               )}
+                              {it.attributes && it.attributes.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {it.attributes.map((a, i) => (
+                                    <span
+                                      key={i}
+                                      className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/60 text-muted-foreground"
+                                    >
+                                      {a}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             <div className="text-sm tabular-nums text-primary self-center">
                               {it.price != null
@@ -387,6 +400,45 @@ function Index() {
                     </div>
                   ))}
                 </div>
+
+                {(reviewQ.data || []).length > 0 && (
+                  <div className="mt-8">
+                    <div className="text-xs uppercase tracking-wider text-destructive mb-2">
+                      Revisão humana · {(reviewQ.data || []).length}
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Itens reprovados pelos guardrails (Great Expectations) — desviados para esta
+                      fila em vez de quebrar o pipeline.
+                    </p>
+                    <div className="divide-y divide-border border border-destructive/30 rounded-lg overflow-hidden">
+                      {(reviewQ.data || []).map((r) => (
+                        <div key={r.id} className="px-4 py-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="font-medium">{r.name || <em className="text-muted-foreground">sem nome</em>}</div>
+                            <div className="text-xs tabular-nums text-muted-foreground">
+                              {r.price != null
+                                ? new Intl.NumberFormat("pt-BR", {
+                                    style: "currency",
+                                    currency: r.currency || "BRL",
+                                  }).format(r.price)
+                                : "preço inválido"}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {r.reasons.map((x, i) => (
+                              <span
+                                key={i}
+                                className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-destructive/15 text-destructive"
+                              >
+                                {REASON_LABEL[x] || x}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </Card>
