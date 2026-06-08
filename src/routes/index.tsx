@@ -233,7 +233,7 @@ function Index() {
             Extração <span className="text-primary">​</span>de Cardápios com IA
           </h1>
           <p className="text-muted-foreground whitespace-pre-line">
-            Envie uma imagem, PDF ou JSON. A IA identifica categorias, itens, descrições e preços, salva no banco e gera uma planilha Excel pronta para download. {"\n"}
+            Envie uma imagem de um cardapio, PDF, JPG  ou JSON.  A IA identifica categorias, itens, descrições e preços, salva no banco e gera uma planilha Excel pronta para download. {"\n"}
           </p>
         </section>
 
