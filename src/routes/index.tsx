@@ -7,7 +7,7 @@ import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { extractMenu } from "@/lib/menu-extract.functions";
+import { extractMenu, deleteUpload } from "@/lib/menu-extract.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -144,12 +144,10 @@ function Index() {
     onError: (e: any) => toast.error(e?.message || "Falha na extração"),
   });
 
+  const removeFn = useServerFn(deleteUpload);
   const removeUpload = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("menu_items").delete().eq("upload_id", id);
-      await supabase.from("menu_items_review").delete().eq("upload_id", id);
-      const { error } = await supabase.from("menu_uploads").delete().eq("id", id);
-      if (error) throw error;
+      await removeFn({ data: { id } });
     },
     onSuccess: (_d, id) => {
       if (activeUpload === id) setActiveUpload(null);

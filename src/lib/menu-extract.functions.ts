@@ -262,3 +262,18 @@ export const extractMenu = createServerFn({ method: "POST" })
       throw e;
     }
   });
+
+export const deleteUpload = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => {
+    if (!d?.id || typeof d.id !== "string" || d.id.length > 64) {
+      throw new Error("id inválido");
+    }
+    return d;
+  })
+  .handler(async ({ data }) => {
+    await supabaseAdmin.from("menu_items").delete().eq("upload_id", data.id);
+    await supabaseAdmin.from("menu_items_review").delete().eq("upload_id", data.id);
+    const { error } = await supabaseAdmin.from("menu_uploads").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
