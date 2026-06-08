@@ -65,7 +65,7 @@ type CleanItem = {
   category: string | null;
   name: string;
   description: string | null;
-  price: number;
+  price: number | null;
   currency: string;
   attributes: string[] | null;
 };
@@ -101,57 +101,25 @@ function coerceAttrs(a: unknown): string[] | null {
 }
 
 function runGuardrails(items: ExtractedItem[], defaultCurrency: string) {
-  const valid: CleanItem[] = [];
-  const rejected: Rejected[] = [];
-  const seen = new Set<string>();
-
-  for (const raw of items) {
-    const reasons: string[] = [];
-
-    const name = typeof raw.name === "string" ? raw.name.trim() : "";
-    const category =
-      typeof raw.category === "string" && raw.category.trim() ? raw.category.trim() : null;
-    const description =
+  const valid: CleanItem[] = items.map((raw) => ({
+    category:
+      typeof raw.category === "string" && raw.category.trim()
+        ? raw.category.trim()
+        : null,
+    name: typeof raw.name === "string" ? raw.name.trim() : "",
+    description:
       typeof raw.description === "string" && raw.description.trim()
         ? raw.description.trim()
-        : null;
-    const price = coercePrice(raw.price);
-    const currency =
+        : null,
+    price: coercePrice(raw.price),
+    currency:
       typeof raw.currency === "string" && raw.currency.trim()
         ? raw.currency.trim().toUpperCase()
-        : defaultCurrency;
-    const attributes = coerceAttrs(raw.attributes);
+        : defaultCurrency,
+    attributes: coerceAttrs(raw.attributes),
+  }));
 
-    // not-null
-    if (!name) reasons.push("name_null");
-    if (price === null) reasons.push("price_null");
-
-    // type / range
-    if (price !== null && !(price > 0)) reasons.push("price_not_positive");
-    if (price !== null && price > 100000) reasons.push("price_out_of_range");
-
-    // duplicate within upload
-    const dupKey = `${name.toLowerCase()}|${price ?? "na"}`;
-    if (name && !reasons.length && seen.has(dupKey)) reasons.push("duplicate");
-
-    if (reasons.length === 0 && name && price !== null) {
-      seen.add(dupKey);
-      valid.push({ category, name, description, price, currency, attributes });
-    } else {
-      rejected.push({
-        raw,
-        category,
-        name: name || null,
-        description,
-        price,
-        currency,
-        attributes,
-        reasons,
-      });
-    }
-  }
-
-  return { valid, rejected };
+  return { valid, rejected: [] as Rejected[] };
 }
 
 export const extractMenu = createServerFn({ method: "POST" })

@@ -22,7 +22,7 @@ export type Database = {
           currency: string | null
           description: string | null
           id: string
-          name: string
+          name: string | null
           price: number | null
           upload_id: string
         }
@@ -33,7 +33,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
-          name: string
+          name?: string | null
           price?: number | null
           upload_id: string
         }
@@ -44,7 +44,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
-          name?: string
+          name?: string | null
           price?: number | null
           upload_id?: string
         }

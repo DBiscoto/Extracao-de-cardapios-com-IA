@@ -1,0 +1,1 @@
+alter table public.menu_items alter column name drop not null;
