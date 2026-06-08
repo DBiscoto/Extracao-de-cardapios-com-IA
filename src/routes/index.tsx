@@ -227,21 +227,19 @@ function Index() {
         <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="size-5 text-primary" />
-            <span className="text-sm font-medium tracking-wide">Cardápio · Extrator</span>
+            <span className="text-sm font-medium tracking-wide">Extrator de Cardapios</span>
           </div>
-          <span className="text-xs text-muted-foreground">POC · Gemini multimodal</span>
+          <span className="text-xs text-muted-foreground">​Aluno: Diogo Biscoto</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-12 space-y-10">
         <section className="space-y-3 max-w-2xl">
           <h1 className="text-4xl font-semibold tracking-tight">
-            Extração <span className="text-primary">Estruturada</span> de Cardápios com IA
+            Extração <span className="text-primary">​</span> de Cardápios com IA
           </h1>
-          <p className="text-muted-foreground">
-            Envie uma imagem, PDF ou JSON. A IA identifica categorias, itens, descrições e preços, salva
-            no banco e gera uma planilha Excel pronta para download. Nada é inventado: trechos ilegíveis
-            ficam em branco ou vão para revisão humana.
+          <p className="text-muted-foreground whitespace-pre-line">
+            Envie uma imagem, PDF ou JSON. A IA identifica categorias, itens, descrições e preços, salva no banco e gera uma planilha Excel pronta para download. {"\n"}
           </p>
         </section>
 
