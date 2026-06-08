@@ -18,7 +18,7 @@ type ExtractedItem = {
 };
 
 const SYSTEM_PROMPT = `Você é um especialista em extrair dados estruturados de cardápios de restaurantes a partir de imagens, PDFs ou texto.
-Sua tarefa: identificar TODOS os itens do cardápio fornecido e devolver SOMENTE um JSON válido (sem markdown, sem comentários).
+Sua tarefa: identificar APENAS os itens efetivamente visíveis e legíveis no cardápio fornecido e devolver SOMENTE um JSON válido (sem markdown, sem comentários).
 
 Formato exato:
 {
@@ -29,16 +29,21 @@ Formato exato:
       "name": "nome do item",
       "description": "ingredientes/detalhes ou null se não houver",
       "price": número decimal (ex: 29.90) ou null se não houver preço claro,
-      "attributes": ["lista curta de atributos extras", "ex: serve 2 pessoas", "contém glúten", "vegetariano", "picante"]
+      "attributes": ["lista curta de atributos extras"]
     }
   ]
 }
 
-Regras:
-- Preços brasileiros: "R$ 29,90" -> 29.90
-- Não invente itens. Se ilegível, retorne items: [].
-- Categorize cada item usando a seção/título visível no cardápio.
-- attributes: array de strings curtas (pode ser []). Inclua porções, alergênicos, restrições alimentares, picância, se servir mais de uma pessoa.
+REGRAS DE FIDELIDADE (CRÍTICO — não viole nunca):
+- NÃO invente itens, categorias, descrições, preços ou atributos. Não complete o que não está no cardápio.
+- Não use conhecimento prévio sobre restaurantes ou pratos típicos para "preencher" informações ausentes.
+- Se um campo não estiver visível ou legível, use null (ou [] para attributes). Nunca chute.
+- Se o preço estiver ilegível, parcialmente cortado ou ambíguo, use price: null (não estime).
+- Se o nome do item estiver ilegível, NÃO inclua o item — descarte.
+- Se o cardápio inteiro estiver ilegível ou não for um cardápio, devolva { "currency": "BRL", "items": [] }.
+- Preços brasileiros: "R$ 29,90" -> 29.90. Mantenha o valor exatamente como aparece.
+- Categorize cada item usando a seção/título visível no cardápio; se não houver, use null.
+- attributes: apenas o que estiver escrito no cardápio. Nunca deduza.
 - Devolva APENAS o JSON, nada mais.`;
 
 // ---------- Guardrails (Great Expectations-style) ----------
