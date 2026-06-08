@@ -111,6 +111,20 @@ function Index() {
     },
   });
 
+  const reviewQ = useQuery({
+    queryKey: ["review", activeUpload],
+    enabled: !!activeUpload,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("menu_items_review")
+        .select("*")
+        .eq("upload_id", activeUpload!)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as ReviewRow[];
+    },
+  });
+
   const upload = useMutation({
     mutationFn: async (file: File) => {
       const base64 = await fileToBase64(file);
@@ -119,7 +133,11 @@ function Index() {
       });
     },
     onSuccess: (res) => {
-      toast.success(`Cardápio processado — ${res.count} item(ns) extraídos`);
+      const rej = (res as any).rejected ?? 0;
+      toast.success(
+        `Cardápio processado — ${res.count} aprovado(s)` +
+          (rej ? ` · ${rej} para revisão` : ""),
+      );
       setActiveUpload(res.uploadId);
       qc.invalidateQueries({ queryKey: ["uploads"] });
     },
@@ -128,6 +146,8 @@ function Index() {
 
   const removeUpload = useMutation({
     mutationFn: async (id: string) => {
+      await supabase.from("menu_items").delete().eq("upload_id", id);
+      await supabase.from("menu_items_review").delete().eq("upload_id", id);
       const { error } = await supabase.from("menu_uploads").delete().eq("id", id);
       if (error) throw error;
     },
@@ -151,22 +171,45 @@ function Index() {
 
   function exportExcel() {
     const items = itemsQ.data || [];
-    if (!items.length) return;
+    const reviews = reviewQ.data || [];
+    if (!items.length && !reviews.length) return;
+
     const rows = items.map((i) => ({
       Categoria: i.category || "",
       Item: i.name,
       Descrição: i.description || "",
       Preço: i.price ?? "",
       Moeda: i.currency || "",
+      Atributos: (i.attributes || []).join("; "),
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
-    ws["!cols"] = [{ wch: 22 }, { wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 8 }];
+    ws["!cols"] = [{ wch: 22 }, { wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 8 }, { wch: 30 }];
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Cardápio");
-    const upload = uploadsQ.data?.find((u) => u.id === activeUpload);
-    const name = (upload?.filename || "cardapio").replace(/\.[^.]+$/, "");
+
+    if (reviews.length) {
+      const revRows = reviews.map((r) => ({
+        Categoria: r.category || "",
+        Item: r.name || "",
+        Descrição: r.description || "",
+        Preço: r.price ?? "",
+        Moeda: r.currency || "",
+        Atributos: (r.attributes || []).join("; "),
+        Motivos: r.reasons.map((x) => REASON_LABEL[x] || x).join("; "),
+      }));
+      const wsR = XLSX.utils.json_to_sheet(revRows);
+      wsR["!cols"] = [
+        { wch: 22 }, { wch: 32 }, { wch: 50 }, { wch: 10 }, { wch: 8 }, { wch: 30 }, { wch: 30 },
+      ];
+      XLSX.utils.book_append_sheet(wb, wsR, "Revisão");
+    }
+
+    const up = uploadsQ.data?.find((u) => u.id === activeUpload);
+    const name = (up?.filename || "cardapio").replace(/\.[^.]+$/, "");
     XLSX.writeFile(wb, `${name}.xlsx`);
   }
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, ItemRow[]>();
