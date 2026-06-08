@@ -6,8 +6,7 @@ import { Upload, FileText, Download, Loader2, Sparkles, Trash2 } from "lucide-re
 import * as XLSX from "xlsx";
 import { toast, Toaster } from "sonner";
 
-import { supabase } from "@/integrations/supabase/client";
-import { extractMenu, deleteUpload } from "@/lib/menu-extract.functions";
+import { extractMenu, deleteUpload, listUploads, listItems, listReview } from "@/lib/menu-extract.functions";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -81,17 +80,15 @@ function fileToBase64(file: File): Promise<string> {
 function Index() {
   const qc = useQueryClient();
   const extract = useServerFn(extractMenu);
+  const listUploadsFn = useServerFn(listUploads);
+  const listItemsFn = useServerFn(listItems);
+  const listReviewFn = useServerFn(listReview);
   const [activeUpload, setActiveUpload] = useState<string | null>(null);
 
   const uploadsQ = useQuery({
     queryKey: ["uploads"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("menu_uploads")
-        .select("id, filename, status, error, created_at")
-        .order("created_at", { ascending: false })
-        .limit(20);
-      if (error) throw error;
+      const data = await listUploadsFn();
       return data as UploadRow[];
     },
     refetchInterval: 4000,
@@ -101,12 +98,7 @@ function Index() {
     queryKey: ["items", activeUpload],
     enabled: !!activeUpload,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("menu_items")
-        .select("*")
-        .eq("upload_id", activeUpload!)
-        .order("category", { ascending: true });
-      if (error) throw error;
+      const data = await listItemsFn({ data: { uploadId: activeUpload! } });
       return data as ItemRow[];
     },
   });
@@ -115,15 +107,11 @@ function Index() {
     queryKey: ["review", activeUpload],
     enabled: !!activeUpload,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("menu_items_review")
-        .select("*")
-        .eq("upload_id", activeUpload!)
-        .order("created_at", { ascending: true });
-      if (error) throw error;
+      const data = await listReviewFn({ data: { uploadId: activeUpload! } });
       return data as ReviewRow[];
     },
   });
+
 
   const upload = useMutation({
     mutationFn: async (file: File) => {
