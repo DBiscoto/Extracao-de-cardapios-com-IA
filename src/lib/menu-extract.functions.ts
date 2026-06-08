@@ -282,3 +282,48 @@ export const deleteUpload = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const listUploads = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { data, error } = await supabaseAdmin
+      .from("menu_uploads")
+      .select("id, filename, status, error, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listItems = createServerFn({ method: "POST" })
+  .inputValidator((d: { uploadId: string }) => {
+    if (!d?.uploadId || typeof d.uploadId !== "string" || d.uploadId.length > 64) {
+      throw new Error("uploadId inválido");
+    }
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabaseAdmin
+      .from("menu_items")
+      .select("id, upload_id, category, name, description, price, currency, attributes, created_at")
+      .eq("upload_id", data.uploadId)
+      .order("category", { ascending: true });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const listReview = createServerFn({ method: "POST" })
+  .inputValidator((d: { uploadId: string }) => {
+    if (!d?.uploadId || typeof d.uploadId !== "string" || d.uploadId.length > 64) {
+      throw new Error("uploadId inválido");
+    }
+    return d;
+  })
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabaseAdmin
+      .from("menu_items_review")
+      .select("id, upload_id, category, name, description, price, currency, attributes, reasons, created_at")
+      .eq("upload_id", data.uploadId)
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
