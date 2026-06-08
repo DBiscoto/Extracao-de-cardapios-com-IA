@@ -281,13 +281,24 @@ export const extractMenu = createServerFn({ method: "POST" })
   });
 
 export const deleteUpload = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => {
+  .inputValidator((d: { id: string; deviceId: string }) => {
     if (!d?.id || typeof d.id !== "string" || d.id.length > 64) {
       throw new Error("id inválido");
     }
+    validateDeviceId(d?.deviceId);
     return d;
   })
   .handler(async ({ data }) => {
+    // verifica que o upload pertence ao device
+    const { data: row, error: selErr } = await supabaseAdmin
+      .from("menu_uploads")
+      .select("id")
+      .eq("id", data.id)
+      .eq("device_id", data.deviceId)
+      .maybeSingle();
+    if (selErr) throw new Error(selErr.message);
+    if (!row) throw new Error("Upload não encontrado");
+
     await supabaseAdmin.from("menu_items").delete().eq("upload_id", data.id);
     await supabaseAdmin.from("menu_items_review").delete().eq("upload_id", data.id);
     const { error } = await supabaseAdmin.from("menu_uploads").delete().eq("id", data.id);
@@ -295,25 +306,43 @@ export const deleteUpload = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const listUploads = createServerFn({ method: "GET" })
-  .handler(async () => {
-    const { data, error } = await supabaseAdmin
-      .from("menu_uploads")
-      .select("id, filename, status, error, created_at")
-      .order("created_at", { ascending: false })
-      .limit(20);
-    if (error) throw new Error(error.message);
-    return data ?? [];
-  });
-
-export const listItems = createServerFn({ method: "POST" })
-  .inputValidator((d: { uploadId: string }) => {
-    if (!d?.uploadId || typeof d.uploadId !== "string" || d.uploadId.length > 64) {
-      throw new Error("uploadId inválido");
-    }
+export const listUploads = createServerFn({ method: "POST" })
+  .inputValidator((d: { deviceId: string }) => {
+    validateDeviceId(d?.deviceId);
     return d;
   })
   .handler(async ({ data }) => {
+    const { data: rows, error } = await supabaseAdmin
+      .from("menu_uploads")
+      .select("id, filename, status, error, created_at")
+      .eq("device_id", data.deviceId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+async function assertOwnsUpload(uploadId: string, deviceId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("menu_uploads")
+    .select("id")
+    .eq("id", uploadId)
+    .eq("device_id", deviceId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Upload não encontrado");
+}
+
+export const listItems = createServerFn({ method: "POST" })
+  .inputValidator((d: { uploadId: string; deviceId: string }) => {
+    if (!d?.uploadId || typeof d.uploadId !== "string" || d.uploadId.length > 64) {
+      throw new Error("uploadId inválido");
+    }
+    validateDeviceId(d?.deviceId);
+    return d;
+  })
+  .handler(async ({ data }) => {
+    await assertOwnsUpload(data.uploadId, data.deviceId);
     const { data: rows, error } = await supabaseAdmin
       .from("menu_items")
       .select("id, upload_id, category, name, description, price, currency, attributes, created_at")
@@ -324,13 +353,15 @@ export const listItems = createServerFn({ method: "POST" })
   });
 
 export const listReview = createServerFn({ method: "POST" })
-  .inputValidator((d: { uploadId: string }) => {
+  .inputValidator((d: { uploadId: string; deviceId: string }) => {
     if (!d?.uploadId || typeof d.uploadId !== "string" || d.uploadId.length > 64) {
       throw new Error("uploadId inválido");
     }
+    validateDeviceId(d?.deviceId);
     return d;
   })
   .handler(async ({ data }) => {
+    await assertOwnsUpload(data.uploadId, data.deviceId);
     const { data: rows, error } = await supabaseAdmin
       .from("menu_items_review")
       .select("id, upload_id, category, name, description, price, currency, attributes, reasons, created_at")
@@ -339,3 +370,4 @@ export const listReview = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
+
